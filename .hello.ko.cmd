@@ -1,1 +1,0 @@
-cmd_/home/vmohanav/workspace/modules/hello.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000  --build-id  -T ./scripts/module-common.lds -o /home/vmohanav/workspace/modules/hello.ko /home/vmohanav/workspace/modules/hello.o /home/vmohanav/workspace/modules/hello.mod.o;  true
