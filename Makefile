@@ -7,4 +7,4 @@ all:
 	$(MAKE) -C $(KDIR) M=$(shell pwd) modules
 
 clean:
-	rm -rf *.o *.ko *.mod.* *.symvers *.order
+	rm -rf *.o *.ko *.mod.* *.symvers *.order *.mod
