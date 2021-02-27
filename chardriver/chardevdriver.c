@@ -3,7 +3,9 @@
 #include <linux/fs.h>//file operations like open/close; read/write
 #include <linux/cdev.h>//char device driver header
 #include <linux/semaphore.h>//for synchronization behaviors
-#include <asm/uaccess.h>//userspace to kernalspace & kernalspace to userspace
+#include <linux/uaccess.h>//userspace to kernalspace & kernalspace to userspace
+
+MODULE_LICENSE("GPL");
 
 //(1) Create a structure for a fake device
 struct fake_device{
@@ -23,19 +25,19 @@ dev_t dev_num;       //will hold the major number that kernel gives us,
 
 
 //file operation declaration
-static int device_open(struct inode *, struct file *);
-static int device_close(struct inode *, struct file *);
-static ssize_t device_read(struct file *, char *, size_t, loff_t *);
-static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
+int device_open(struct inode *, struct file *);
+int device_close(struct inode *, struct file *);
+ssize_t device_read(struct file *, char *, size_t, loff_t *);
+ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 
 
 //(6) Tell the kernel which functions to call when user operates on our device file
-const struct file_operations fops = {
+static struct file_operations fops = {
 	.owner = THIS_MODULE, //prevent unloading of this module when operation in use
 	.open = device_open, //points to the method to call when opening a device
 	.release = device_close, //points to the method to call when closing a device
 	.write = device_write, //points to the method to call when writing to the device
-	.read = device_read //points to the method to call when reading a device
+	.read = device_read, //points to the method to call when reading a device
 };
 
 
@@ -56,11 +58,11 @@ int device_open(struct inode *inode, struct file *filp){
 }
 
 //(8) called when user wants to get information from the device
-ssize_t device_read(struct file* filp, char* bufStoreData, size_t bufCount, loff_t* curOffset){
+ssize_t device_read(struct file* filp, char* bufStoreData, size_t bufCount, loff_t *curOffset){
 	//take data from kernel space(device) to user space(process)
 	//copy_to_user(desitnation, source, sizeToTransfer)
 	printk(KERN_INFO "MYTESTDEVICE: Reading from device\n");
-	ret = raw_copy_to_user(bufStoreData, virtual_device.data, bufCount);
+	ret = copy_to_user(bufStoreData, virtual_device.data, bufCount);
 	return ret;
 }
 
@@ -70,8 +72,9 @@ ssize_t device_write(struct file* filp, const char* bufSourceData, size_t bufCou
 	//copy_from_user (dest, source, count)
 	
 	printk(KERN_INFO "MYTESTDEVICE: writing to device\n");
-	ret = raw_copy_from_user(virtual_device.data, bufSourceData, bufCount);
-	return ret;
+	ret = copy_from_user(virtual_device.data, bufSourceData, bufCount);
+
+	return bufCount;
 }
 
 //(10) called upon user close
